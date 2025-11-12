@@ -1,0 +1,106 @@
+# ------------------------------------------------------------
+# STEP 1: Import Required Libraries
+# ------------------------------------------------------------
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+
+# ------------------------------------------------------------
+# STEP 2: Load Dataset
+# ------------------------------------------------------------
+df = pd.read_csv(r"C:\Users\Vedant123\Downloads\datasets\pima-indians-diabetes.csv")
+print("✅ Dataset Loaded Successfully!")
+print(df.head())
+
+# ------------------------------------------------------------
+# STEP 3: Data Exploration
+# ------------------------------------------------------------
+print("\nDataset Info:")
+print(df.info())
+print("\nMissing Values:\n", df.isnull().sum())
+
+# ------------------------------------------------------------
+# STEP 4: Data Preprocessing
+# ------------------------------------------------------------
+# Some columns can have zeros instead of missing values (for example, Glucose, BMI, etc.)
+# Replace 0s with NaN for these medical columns
+cols_with_zero = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
+df[cols_with_zero] = df[cols_with_zero].replace(0, np.nan)
+
+# Fill missing values with column means
+df.fillna(df.mean(), inplace=True)
+
+print("\n✅ Missing/Zero Values Handled")
+
+# ------------------------------------------------------------
+# STEP 5: Define Features and Target
+# ------------------------------------------------------------
+X = df.drop('Outcome', axis=1)
+y = df['Outcome']
+
+# ------------------------------------------------------------
+# STEP 6: Feature Scaling
+# ------------------------------------------------------------
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+print("\n✅ Feature Scaling Completed")
+
+# ------------------------------------------------------------
+# STEP 7: Split Data into Train/Test Sets
+# ------------------------------------------------------------
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.25, random_state=42)
+print(f"\nTraining Data Shape: {X_train.shape}")
+print(f"Testing Data Shape: {X_test.shape}")
+
+# ------------------------------------------------------------
+# STEP 8: Train Naïve Bayes Model
+# ------------------------------------------------------------
+model = GaussianNB()
+model.fit(X_train, y_train)
+print("\n✅ Naïve Bayes Model Trained Successfully!")
+
+# ------------------------------------------------------------
+# STEP 9: Make Predictions
+# ------------------------------------------------------------
+y_pred = model.predict(X_test)
+
+# ------------------------------------------------------------
+# STEP 10: Evaluate Model Performance
+# ------------------------------------------------------------
+print("\n🔹 Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\n🔹 Classification Report:")
+print(classification_report(y_test, y_pred))
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"\n🎯 Model Accuracy: {accuracy * 100:.2f}%")
+
+# ------------------------------------------------------------
+# STEP 11: Visualization
+# ------------------------------------------------------------
+plt.figure(figsize=(6,4))
+plt.bar(['Correct', 'Incorrect'], [accuracy*100, (1-accuracy)*100], color=['green', 'red'])
+plt.title('Naïve Bayes Classification Accuracy')
+plt.ylabel('Percentage (%)')
+plt.show()
+
+# ------------------------------------------------------------
+# STEP 12: Test on Custom Input
+# ------------------------------------------------------------
+print("\n🔹 Test Model for Custom Input")
+
+# Example patient data [Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age]
+sample = np.array([[3, 120, 70, 25, 100, 30.5, 0.4, 28]])
+sample_scaled = scaler.transform(sample)
+
+pred = model.predict(sample_scaled)
+print("\n🧠 Prediction for given input:")
+if pred[0] == 1:
+    print("🩸 Patient is likely to have Diabetes (Outcome = 1)")
+else:
+    print("✅ Patient is unlikely to have Diabetes (Outcome = 0)")

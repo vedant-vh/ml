@@ -1,0 +1,86 @@
+# ------------------------------------------------------------
+# STEP 1: Import Required Libraries
+# ------------------------------------------------------------
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+
+# ------------------------------------------------------------
+# STEP 2: Load Dataset
+# ------------------------------------------------------------
+df = pd.read_csv(r"C:\Users\Vedant123\Downloads\datasets\pima-indians-diabetes.csv")
+print("✅ Dataset Loaded Successfully!")
+print(df.head())
+
+# ------------------------------------------------------------
+# STEP 3: Data Preprocessing
+# ------------------------------------------------------------
+# Replace invalid zeros with NaN for selected columns
+cols_with_zero = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
+df[cols_with_zero] = df[cols_with_zero].replace(0, np.nan)
+
+# Fill missing values with column means
+df.fillna(df.mean(), inplace=True)
+
+print("\n✅ Missing/Zero Values Replaced with Mean Values")
+print(df.isnull().sum())
+
+# ------------------------------------------------------------
+# STEP 4: Define Features and Target
+# ------------------------------------------------------------
+X = df.drop('Outcome', axis=1)
+y = df['Outcome']
+
+# ------------------------------------------------------------
+# STEP 5: Split Data into Train/Test Sets
+# ------------------------------------------------------------
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+print(f"\nTraining samples: {X_train.shape[0]}, Testing samples: {X_test.shape[0]}")
+
+# ------------------------------------------------------------
+# STEP 6: Create and Train Decision Tree
+# ------------------------------------------------------------
+model = DecisionTreeClassifier(criterion='entropy', random_state=42)
+model.fit(X_train, y_train)
+print("\n✅ Decision Tree Model Trained Successfully!")
+
+# ------------------------------------------------------------
+# STEP 7: Evaluate the Model
+# ------------------------------------------------------------
+y_pred = model.predict(X_test)
+
+print("\n🔹 Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\n🔹 Classification Report:")
+print(classification_report(y_test, y_pred))
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"🎯 Model Accuracy: {accuracy * 100:.2f}%")
+
+# ------------------------------------------------------------
+# STEP 8: Visualize the Decision Tree
+# ------------------------------------------------------------
+plt.figure(figsize=(20,10))
+plot_tree(model, filled=True, feature_names=X.columns, class_names=['No Diabetes', 'Diabetes'])
+plt.title("Decision Tree for Diabetes Classification")
+plt.show()
+
+# ------------------------------------------------------------
+# STEP 9: Test the Decision Tree for a Random Sample
+# ------------------------------------------------------------
+print("\n🔹 Test Decision Tree for a Random Patient Sample")
+
+sample = np.array([[3, 120, 70, 25, 100, 30.5, 0.4, 28]])  # [Pregnancies, Glucose, BP, SkinThickness, Insulin, BMI, DPF, Age]
+sample_df = pd.DataFrame(sample, columns=X.columns)
+
+prediction = model.predict(sample_df)
+
+print("\n🧠 Prediction for given input:")
+if prediction[0] == 1:
+    print("🩸 Patient is likely to have Diabetes (Outcome = 1)")
+else:
+    print("✅ Patient is unlikely to have Diabetes (Outcome = 0)")
