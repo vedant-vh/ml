@@ -1,0 +1,78 @@
+# ------------------------------------------------------------
+# STEP a: Import Required Libraries
+# ------------------------------------------------------------
+import pandas as pd
+import matplotlib.pyplot as plt
+from mlxtend.frequent_patterns import apriori, association_rules
+from mlxtend.preprocessing import TransactionEncoder
+
+# ------------------------------------------------------------
+# STEP b: Load Dataset (No Header)
+# ------------------------------------------------------------
+# Note: header=None because the dataset has no column names
+df = pd.read_csv(r"C:\Users\Vedant123\Downloads\datasets\Order2.csv", header=None)
+print("✅ Dataset Loaded Successfully!")
+print(df.head())
+
+# ------------------------------------------------------------
+# STEP c: Data Pre-processing
+# ------------------------------------------------------------
+# Convert the dataset into a list of transactions (each row = one transaction)
+transactions = []
+for i in range(len(df)):
+    transaction = [str(df.values[i, j]) for j in range(len(df.columns)) if str(df.values[i, j]) != 'nan']
+    transactions.append(transaction)
+
+print(f"\n✅ Total Transactions: {len(transactions)}")
+print("Sample Transaction:\n", transactions[0])
+
+# ------------------------------------------------------------
+# STEP d: Encode Transactions (One-Hot Encoding)
+# ------------------------------------------------------------
+te = TransactionEncoder()
+te_ary = te.fit(transactions).transform(transactions)
+df_encoded = pd.DataFrame(te_ary, columns=te.columns_)
+
+print("\n✅ One-Hot Encoded Transaction Data:")
+print(df_encoded.head())
+
+# ------------------------------------------------------------
+# STEP e: Apply Apriori Algorithm
+# ------------------------------------------------------------
+# Find frequent itemsets with minimum support of 1%
+frequent_itemsets = apriori(df_encoded, min_support=0.01, use_colnames=True)
+frequent_itemsets.sort_values(by='support', ascending=False, inplace=True)
+
+print("\n🔹 Frequent Itemsets (Top 10):")
+print(frequent_itemsets.head(10))
+
+# ------------------------------------------------------------
+# STEP f: Generate Association Rules
+# ------------------------------------------------------------
+rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1.0)
+rules.sort_values(by='lift', ascending=False, inplace=True)
+
+print("\n🔹 Association Rules (Top 10):")
+print(rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']].head(10))
+
+# ------------------------------------------------------------
+# STEP g: Visualization - Support vs Confidence
+# ------------------------------------------------------------
+plt.figure(figsize=(8,5))
+plt.scatter(rules['support'], rules['confidence'], c=rules['lift'], cmap='viridis', s=70)
+plt.colorbar(label='Lift')
+plt.xlabel('Support')
+plt.ylabel('Confidence')
+plt.title('Apriori Algorithm - Support vs Confidence')
+plt.show()
+
+# ------------------------------------------------------------
+# STEP h: Visualization - Top 10 Frequent Itemsets
+# ------------------------------------------------------------
+plt.figure(figsize=(10,5))
+plt.bar(frequent_itemsets['itemsets'].astype(str).head(10), frequent_itemsets['support'].head(10), color='orange')
+plt.xticks(rotation=45, ha='right')
+plt.xlabel('Itemsets')
+plt.ylabel('Support')
+plt.title('Top 10 Frequent Itemsets')
+plt.show()
